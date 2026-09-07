@@ -31,6 +31,8 @@ cantidad_credito = 0
 def pedir_entero_en_rango(mensaje, minimo, maximo):
     """Solicita al usuario un número entero dentro de un rango, reintentando
     hasta que la entrada sea correcta dentro de los límites establecidos.
+    Si es una cadena de texto que no representa un número entero, se rechaza
+    y se pide reingresar el dato.
     Recibe:  mensaje (str) a mostrar, minimo (int) y maximo (int) del rango.
     Devuelve: el número ingresado (int), garantizado dentro del rango.
     """
@@ -43,8 +45,12 @@ def pedir_entero_en_rango(mensaje, minimo, maximo):
 def pedir_real_en_rango(mensaje, minimo):
     """Solicita al usuario un número real estrictamente mayor que un mínimo,
     reintentando hasta que la entrada sea válida.
- 
-    Recibe:  mensaje (str) a mostrar, minimo (float) que el valor debe superar.
+    Validamos que sea un número real quitando el punto que tenga con el replace
+    para que queden solo los dígitos; se verifica si es un número con isdigit()
+    y, finalmente, se convierte a float para comparar con el mínimo.
+    Si es una cadena de texto que no representa un número real, se rechaza
+    y se pide reingresar el dato.
+    Recibe:  mensaje (str) a mostrar y minimo (float) que es el valor a superar.
     Devuelve: el número ingresado (float), garantizado mayor que 'minimo'.
     """
     entrada = input(mensaje)
@@ -66,7 +72,7 @@ def nombre_de_categoría(categoria):
         case 2:
             return "Bebidas"
         case 3:
-            return "Comestibles"
+            return "Almacén"
         case 4:
             return "Librería"
 
@@ -87,8 +93,8 @@ def nombre_de_medio_de_pago(medio_de_pago):
 
 def calcular_subtotal(precio_unitario, cantidad_unidades):
     """Calcula el subtotal de la venta.
-    Recibe el precio unitario y la cantidad de unidades.
-    Devuelve el subtotal.
+    Recibe: el precio unitario y la cantidad de unidades.
+    Devuelve: el subtotal.
     """
     return precio_unitario * cantidad_unidades
 
@@ -105,12 +111,12 @@ def calcular_descuento_por_monto(subtotal):
 def calcular_ajuste_medio_pago(subtotal, descuento_monto, medio_de_pago):
     """Calcula el ajuste según el medio de pago (descuento o recargo),
     ya sobre el importe con el descuento por monto aplicado.
-    Recibe: subtotal, descuento_monto y medio_de_pago.
-    Devuelve: el ajuste según corresponda.
+    Recibe: el subtotal, el descuento por monto y el medio de pago.
+    Devuelve: el ajuste, que puede ser negativo (descuento) o positivo (recargo).
     """
     importe_tras_descuento = subtotal - descuento_monto
     if medio_de_pago == 1: #O sea, para efectivo.   
-        return (importe_tras_descuento * PORCENTAJE_DESCUENTO_EFECTIVO / 100)
+        return -(importe_tras_descuento * PORCENTAJE_DESCUENTO_EFECTIVO / 100)
     elif medio_de_pago == 3: #O sea, para crédito.    
         return importe_tras_descuento * PORCENTAJE_RECARGO_CREDITO / 100
     return 0 #Es el caso del débito, que no tiene ajuste ni recargo.
@@ -118,43 +124,83 @@ def calcular_ajuste_medio_pago(subtotal, descuento_monto, medio_de_pago):
 def calcular_importe_final(subtotal, descuento_monto, ajuste_medio_pago):
     """Calcula el importe final de la venta, combinando el subtotal,
     el descuento por monto y el ajuste por medio de pago.
-    Recibe: subtotal, descuento_monto y ajuste_medio_pago.
-    Devuelve: el importe final de la venta.
+    Recibe: subtotal, descuento por monto y ajuste por medio de pago.
+    Devuelve: el importe final de la venta (a pagar).
     """
     return subtotal - descuento_monto + ajuste_medio_pago
 
+def sumar_digitos(numero):
+    """Es para resolver el cálculo auxiliar del código de la suerte.
+    Recibe: un número entero positivo.
+    Devuelve: la suma de sus dígitos, calculada recursivamente.
+    """
+    if numero == 0:
+        return 0
+    return numero % 10 + sumar_digitos(numero // 10)
+
+def obtener_codigo_suerte(numero):
+    """Sirve para calcular el código de la suerte que don Ramón le da
+    al cliente en el final del tique. Toma los dígitos del importe final 
+    de la venta como entero y los suma recursivamente hasta lograr 
+    un solo dígito. Se apoya en la función sumar_digitos para hacer los cálculos 
+    auxiliares.
+    Recibe: un número entero positivo.
+    Devuelve: un número entero entre 0 y 9, que es el código de la suerte.
+    """
+    if numero < 10:
+        return numero
+    return obtener_codigo_suerte(sumar_digitos(numero))
+
 def categoria_producto():
     """Solicita al usuario la categoría del producto y devuelve el número
-    correspondiente a la categoría elegida."""
+    correspondiente a la categoría elegida.
+    Recibe: nada.
+    Devuelve: un número entero entre 1 y 4, que representa la categoría."""
     print("Seleccione la categoría del producto: ")
     print("1) Golosinas")
     print("2) Bebidas")
-    print("3) Comestibles")
+    print("3) Almacén")
     print("4) Librería")
     categoria = pedir_entero_en_rango("Ingrese el número de la categoría: ", 1, 4)
     return categoria
 
-def generar_ticket(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte):
-    """Muestra el ticket de la venta con el desglose completo. No calcula
-    nada, solo imprime los valores que ya vienen calculados.
+def generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte):
+    """Muestra el tique de la venta en detalle. Simplemente imprime
+    ordenadamente los valores que ya vienen calculados.
+    Recibe: categoría, subtotal, descuento por monto, ajuste por medio de pago,
+    medio de pago, importe final y código de la suerte.
+    Devuelve: nada, solo imprime en pantalla.
     """
-    print("=== TICKET DE VENTA ===")
+    print("===== TIQUE DE VENTA =====")
     print(f"Categoría del producto: {nombre_de_categoría(categoria)}")
     print(f"Subtotal: ${round(subtotal, 2)}")
     if descuento_monto > 0:
         print(f"Descuento por monto ({PORCENTAJE_DESCUENTO_MONTO}%): -${round(descuento_monto, 2)}")
     print(f"Medio de pago: {nombre_de_medio_de_pago(medio_de_pago)}")
     if ajuste_medio_pago < 0:
-        print(f"Descuento por pago en efectivo ({PORCENTAJE_DESCUENTO_EFECTIVO}%): ${round(abs(ajuste_medio_pago), 2)}")
+        print(f"Descuento por pago en efectivo ({PORCENTAJE_DESCUENTO_EFECTIVO}%): -${round(abs(ajuste_medio_pago), 2)}")
     elif ajuste_medio_pago > 0:
         print(f"Recargo por pago con crédito ({PORCENTAJE_RECARGO_CREDITO}%): +${round(ajuste_medio_pago, 2)}")
-    print(f"IMPORTE FINAL: ${round(importe_final,2)}")
-    print(f"Código de la suerte: ")
+    print(f"IMPORTE FINAL: ${round(importe_final, 2)}")
+    print(f"Código de la suerte: {codigo_suerte}")
     print("========================")        
+
+def pedir_confirmacion(mensaje):
+    """Pide S/N al usuario, reintentando hasta que responda una de las dos.
+    Recibe: mensaje (str) a mostrar.
+    Devuelve: un booleano. True si respondió S, False si respondió N.
+    """
+    respuesta = input(mensaje).strip().upper()
+    while respuesta != "S" and respuesta != "N":
+        print("Entrada inválida. Responda 'S' para sí o 'N' para no.")
+        respuesta = input(mensaje).strip().upper()
+    return respuesta == "S"
 
 def calcular_promedio_venta(total_recaudado, cantidad_ventas):
     """Calcula el importe promedio por venta, sin dividir por cero
     si todavía no hay ventas.
+    Recibe: total recaudado y cantidad de ventas.
+    Devuelve: el promedio de venta o 0 si no hay ventas.
     """
     if cantidad_ventas == 0:
         return 0
@@ -162,6 +208,10 @@ def calcular_promedio_venta(total_recaudado, cantidad_ventas):
 
 def determinar_medio_mas_utilizado(cant_efectivo, cant_debito, cant_credito):
     """Devuelve el nombre del medio de pago más utilizado en el día.
+    Predeterminadamente, toma como mayor a la cantidad de efectivo, las compara
+    con las de débito y crédito y devuelve el nombre del que tenga la mayor cantidad.
+    Recibe: cantidad de ventas en efectivo, débito y crédito.
+    Devuelve: el nombre del medio de pago más utilizado.
     """
     mayor = cant_efectivo
     nombre = "Efectivo"
@@ -176,8 +226,11 @@ def determinar_medio_mas_utilizado(cant_efectivo, cant_debito, cant_credito):
 def mostrar_resumen_dia():
     """Muestra el resumen de ventas del día. No calcula nada directamente,
     usa calcular_promedio_venta y determinar_medio_mas_utilizado para eso.
+    Recibe: nada.
+    Devuelve: nada, solo imprime en pantalla.
     """
-    print("\n=== RESUMEN DEL DÍA ===")
+    print("***********************")
+    print("=== RESUMEN DEL DÍA ===")
     if cantidad_ventas == 0:
         print("Todavía no se registraron ventas en el día.")
         return
@@ -189,18 +242,33 @@ def mostrar_resumen_dia():
     print(f"Venta más alta del día: ${round(venta_mas_alta, 2)}")
     print(f"Total en Golosinas: ${round(total_golosinas, 2)}")
     print(f"Total en Bebidas: ${round(total_bebidas, 2)}")
-    print(f"Total en Comestibles: ${round(total_almacen, 2)}")
+    print(f"Total en Almacén: ${round(total_almacen, 2)}")
     print(f"Total en Librería: ${round(total_libreria, 2)}")
     print(f"Ventas en efectivo: {cantidad_efectivo}")
     print(f"Ventas con débito: {cantidad_debito}")
     print(f"Ventas con crédito: {cantidad_credito}")
     print(f"Medio de pago más utilizado: {medio_mas_usado}")
+    print("***********************")
+
+def cuenta_regresiva(numero):
+    """Cuenta regresiva del cierre de caja, de 5 a 0, mostrando cada número
+    por pantalla y cerrando con la aclaratoria de que cerró caja.
+    Recibe: un número entero positivo.
+    Devuelve: nada, solo imprime en pantalla.
+    """
+    if numero == 0:
+        print("¡Caja cerrada!")
+        return
+    print(numero)
+    cuenta_regresiva(numero - 1)
 
 def mostrar_menu_principal():
     """Muestra las opciones del menú principal y devuelve la opción
     elegida por el usuario, ya validada.
+    Recibe: nada.
+    Devuelve: un número entero entre 1 y 3, que representa la opción elegida.
     """
-    print("\n=== KIOSCO EL CAMPUS ===")
+    print("\n===||| KIOSCO EL CAMPUS |||===")
     print("1) Registrar una venta.")
     print("2) Ver resumen del día.")
     print("3) Cerrar caja y salir.")
@@ -211,9 +279,11 @@ def mostrar_menu_principal():
 def menu():
     """Punto de entrada del programa: menú principal del kiosco."""
     opcion = 0
+    global total_recaudado, cantidad_ventas, venta_mas_alta
+    global total_golosinas, total_bebidas, total_almacen, total_libreria
+    global cantidad_efectivo, cantidad_debito, cantidad_credito
     while opcion != 3:
         opcion = mostrar_menu_principal()
-
         if opcion == 1:
             categoria = categoria_producto()
             precio_unitario = pedir_real_en_rango("Ingrese el precio unitario del producto: ", 0)
@@ -223,8 +293,8 @@ def menu():
             descuento_monto = calcular_descuento_por_monto(subtotal)
             ajuste_medio_pago = calcular_ajuste_medio_pago(subtotal, descuento_monto, medio_de_pago)
             importe_final = calcular_importe_final(subtotal, descuento_monto, ajuste_medio_pago)
-            #falta agregar la del código de la suerte - OPCIONAL
-            generar_ticket(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final) #AGREGAR CÓDIGO DE LA SUERTE - OPCIONAL
+            codigo_suerte = obtener_codigo_suerte(round(importe_final))
+            generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte)
             #Actualizamos los acumuladores del día con lo de esta venta.
             total_recaudado = total_recaudado + importe_final
             cantidad_ventas = cantidad_ventas + 1
@@ -247,6 +317,11 @@ def menu():
         elif opcion == 2:
             mostrar_resumen_dia()
         else:
-            print("Cerrando caja y saliendo del programa...")
-    print("¡Hasta mañana, Don Ramón!")
+            confirmar = pedir_confirmacion("¿Confirma el cierre de caja? (S/N): ")
+            if confirmar:
+                mostrar_resumen_dia()
+                cuenta_regresiva(5)
+            else:
+                opcion = 0 #Como dijo que no, lo volvemos al menú principal.
+    print("¡Hasta mañana, Don Ramón! Gracias por utilizar nuestro programa. :)")
 menu()
