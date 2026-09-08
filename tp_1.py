@@ -9,9 +9,7 @@ Integrantes del grupo:
 
 """
 Acá declaramos acumuladores, contadores y constantes para usar en 
-el programa principal. Como no podemos usar tuplas o listas, decidimos 
-ponerlas como variables globales. No es la mejor práctica, 
-pero nos permite cumplir con las pautas que dieron.
+el programa principal.
 """
 MONTO_MINIMO_DESCUENTO = 25000      # subtotal a partir del cual hay descuento
 PORCENTAJE_DESCUENTO_MONTO = 10     # % de descuento por superar el monto
@@ -48,8 +46,6 @@ def pedir_real_en_rango(mensaje, minimo):
     Validamos que sea un número real quitando el punto que tenga con el replace
     para que queden solo los dígitos; se verifica si es un número con isdigit()
     y, finalmente, se convierte a float para comparar con el mínimo.
-    Si es una cadena de texto que no representa un número real, se rechaza
-    y se pide reingresar el dato.
     Recibe:  mensaje (str) a mostrar y minimo (float) que es el valor a superar.
     Devuelve: el número ingresado (float), garantizado mayor que 'minimo'.
     """
@@ -58,6 +54,40 @@ def pedir_real_en_rango(mensaje, minimo):
         print(f"Entrada inválida. Ingrese un número real mayor que {minimo}.")
         entrada = input(mensaje)
     return float(entrada)
+
+def registrar_venta():
+    global total_recaudado, cantidad_ventas, venta_mas_alta
+    global total_golosinas, total_bebidas, total_almacen, total_libreria
+    global cantidad_efectivo, cantidad_debito, cantidad_credito
+    categoria = categoria_producto()
+    precio_unitario = pedir_real_en_rango("Ingrese el precio unitario del producto: ", 0)
+    cantidad_unidades = pedir_entero_en_rango("Ingrese la cantidad de unidades: ", 1, 9999)
+    medio_de_pago = pedir_entero_en_rango("Ingrese el medio de pago (1: Efectivo, 2: Tarjeta de débito, 3: Tarjeta de crédito): ", 1, 3)
+    subtotal = calcular_subtotal(precio_unitario, cantidad_unidades)
+    descuento_monto = calcular_descuento_por_monto(subtotal)
+    ajuste_medio_pago = calcular_ajuste_medio_pago(subtotal, descuento_monto, medio_de_pago)
+    importe_final = calcular_importe_final(subtotal, descuento_monto, ajuste_medio_pago)
+    codigo_suerte = obtener_codigo_suerte(round(importe_final))
+    generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte)
+    #A continuación, actualizamos los acumuladores del día con lo de esta venta.
+    total_recaudado = total_recaudado + importe_final
+    cantidad_ventas = cantidad_ventas + 1
+    if importe_final > venta_mas_alta:
+        venta_mas_alta = importe_final
+    if categoria == 1:
+        total_golosinas = total_golosinas + importe_final
+    elif categoria == 2:
+        total_bebidas = total_bebidas + importe_final
+    elif categoria == 3:
+        total_almacen = total_almacen + importe_final
+    else:
+        total_libreria = total_libreria + importe_final
+    if medio_de_pago == 1:
+        cantidad_efectivo = cantidad_efectivo + 1
+    elif medio_de_pago == 2:
+        cantidad_debito = cantidad_debito + 1
+    else:
+        cantidad_credito = cantidad_credito + 1
 
 def nombre_de_categoría(categoria):
     """Sirve para pasar el número de categoría correspondiente
@@ -285,35 +315,7 @@ def menu():
     while opcion != 3:
         opcion = mostrar_menu_principal()
         if opcion == 1:
-            categoria = categoria_producto()
-            precio_unitario = pedir_real_en_rango("Ingrese el precio unitario del producto: ", 0)
-            cantidad_unidades = pedir_entero_en_rango("Ingrese la cantidad de unidades: ", 1, 9999)
-            medio_de_pago = pedir_entero_en_rango("Ingrese el medio de pago (1: Efectivo, 2: Tarjeta de débito, 3: Tarjeta de crédito): ", 1, 3)
-            subtotal = calcular_subtotal(precio_unitario, cantidad_unidades)
-            descuento_monto = calcular_descuento_por_monto(subtotal)
-            ajuste_medio_pago = calcular_ajuste_medio_pago(subtotal, descuento_monto, medio_de_pago)
-            importe_final = calcular_importe_final(subtotal, descuento_monto, ajuste_medio_pago)
-            codigo_suerte = obtener_codigo_suerte(round(importe_final))
-            generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte)
-            #Actualizamos los acumuladores del día con lo de esta venta.
-            total_recaudado = total_recaudado + importe_final
-            cantidad_ventas = cantidad_ventas + 1
-            if importe_final > venta_mas_alta:
-                venta_mas_alta = importe_final
-            if categoria == 1:
-                total_golosinas = total_golosinas + importe_final
-            elif categoria == 2:
-                total_bebidas = total_bebidas + importe_final
-            elif categoria == 3:
-                total_almacen = total_almacen + importe_final
-            else:
-                total_libreria = total_libreria + importe_final
-            if medio_de_pago == 1:
-                cantidad_efectivo = cantidad_efectivo + 1
-            elif medio_de_pago == 2:
-                cantidad_debito = cantidad_debito + 1
-            else:
-                cantidad_credito = cantidad_credito + 1
+            registrar_venta()
         elif opcion == 2:
             mostrar_resumen_dia()
         else:
