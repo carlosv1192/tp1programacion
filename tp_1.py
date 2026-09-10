@@ -56,7 +56,12 @@ def pedir_real_en_rango(mensaje, minimo):
     return float(entrada)
 
 def registrar_venta():
-    global total_recaudado, cantidad_ventas, venta_mas_alta
+    """
+    Sirve para registrar una venta a partir de datos pedidos al usuario.
+    Recibe: nada.
+    Devuelve: nada, solo imprime el tique de la venta y actualiza los contadores
+    del día con lo de esta venta.
+    """
     global total_golosinas, total_bebidas, total_almacen, total_libreria
     global cantidad_efectivo, cantidad_debito, cantidad_credito
     categoria = categoria_producto()
@@ -68,9 +73,21 @@ def registrar_venta():
     ajuste_medio_pago = calcular_ajuste_medio_pago(subtotal, descuento_monto, medio_de_pago)
     importe_final = calcular_importe_final(subtotal, descuento_monto, ajuste_medio_pago)
     codigo_suerte = obtener_codigo_suerte(round(importe_final))
-    generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte)
+    generar_tique(precio_unitario, cantidad_unidades, categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte)
     #A continuación, actualizamos los acumuladores del día con lo de esta venta.
-    total_recaudado = total_recaudado + importe_final
+    actualizar_contadores_de_venta(importe_final, categoria, medio_de_pago)
+
+def actualizar_contadores_de_venta(importe_final, categoria, medio_de_pago):
+    """
+    Sirve para actualizar los contadores y acumuladores del día con lo de la venta recién registrada.
+    Recibe: el importe final, la categoría del producto y el medio de pago.
+    Devuelve: nada, ya que solo actualiza los contadores.
+    """
+    global total_recaudado, cantidad_ventas, venta_mas_alta
+    global total_golosinas, total_bebidas, total_almacen, total_libreria
+    global cantidad_efectivo, cantidad_debito, cantidad_credito
+
+    total_recaudado = total_recaudado + importe_final   
     cantidad_ventas = cantidad_ventas + 1
     if importe_final > venta_mas_alta:
         venta_mas_alta = importe_final
@@ -89,7 +106,7 @@ def registrar_venta():
     else:
         cantidad_credito = cantidad_credito + 1
 
-def nombre_de_categoría(categoria):
+def nombre_de_categoria(categoria):
     """Sirve para pasar el número de categoría correspondiente
     a su denominación textual y evitar que escriba solo el número, que es
     menos legible y más difícil de asociar.
@@ -194,15 +211,14 @@ def categoria_producto():
     categoria = pedir_entero_en_rango("Ingrese el número de la categoría: ", 1, 4)
     return categoria
 
-def generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte):
+def generar_tique(precio_unitario, cantidad_unidades, categoria, subtotal, descuento_monto, ajuste_medio_pago, medio_de_pago, importe_final, codigo_suerte):
     """Muestra el tique de la venta en detalle. Simplemente imprime
     ordenadamente los valores que ya vienen calculados.
-    Recibe: categoría, subtotal, descuento por monto, ajuste por medio de pago,
+    Recibe: precio unitario, cantidad de unidades, categoría, subtotal, descuento por monto, ajuste por medio de pago,
     medio de pago, importe final y código de la suerte.
     Devuelve: nada, solo imprime en pantalla.
     """
     print("===== TIQUE DE VENTA =====")
-    print(f"Categoría del producto: {nombre_de_categoría(categoria)}")
     print(f"Subtotal: ${round(subtotal, 2)}")
     if descuento_monto > 0:
         print(f"Descuento por monto ({PORCENTAJE_DESCUENTO_MONTO}%): -${round(descuento_monto, 2)}")
@@ -211,6 +227,7 @@ def generar_tique(categoria, subtotal, descuento_monto, ajuste_medio_pago, medio
         print(f"Descuento por pago en efectivo ({PORCENTAJE_DESCUENTO_EFECTIVO}%): -${round(abs(ajuste_medio_pago), 2)}")
     elif ajuste_medio_pago > 0:
         print(f"Recargo por pago con crédito ({PORCENTAJE_RECARGO_CREDITO}%): +${round(ajuste_medio_pago, 2)}")
+    print(f"Compró {nombre_de_categoria(categoria)}, {cantidad_unidades} unidades por ${round(precio_unitario, 2)} cada una.")
     print(f"IMPORTE FINAL: ${round(importe_final, 2)}")
     print(f"Código de la suerte: {codigo_suerte}")
     print("========================")        
