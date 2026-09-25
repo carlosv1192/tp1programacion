@@ -15,6 +15,12 @@ MONTO_MINIMO_DESCUENTO = 25000      # subtotal a partir del cual hay descuento
 PORCENTAJE_DESCUENTO_MONTO = 10     # % de descuento por superar el monto
 PORCENTAJE_DESCUENTO_EFECTIVO = 5   # % de descuento por pagar en efectivo
 PORCENTAJE_RECARGO_CREDITO = 8      # % de recargo por pagar con crédito
+CATEGORIAS = ["Golosinas", "Bebidas", "Almacén", "Librería"]
+MEDIOS_PAGO = ["Efectivo", "Débito", "Crédito"]
+STOCK_MINIMO = 5 # por debajo de este, el producto va a reposición
+CODIGO, NOMBRE, CATEGORIA, PRECIO, STOCK = 0, 1, 2, 3, 4
+NUMERO, CODIGO_VENTA, CANTIDAD, MEDIO_PAGO, IMPORTE_FINAL = 0, 1, 2, 3, 4
+
 total_recaudado = 0
 cantidad_ventas = 0
 venta_mas_alta = 0
@@ -25,6 +31,62 @@ total_libreria = 0
 cantidad_efectivo = 0
 cantidad_debito = 0
 cantidad_credito = 0
+
+#CATÁLOGO INICIAL
+# Lista de productos. Cada producto es una LISTA (mutable: el stock cambia):
+#     [codigo, nombre, categoria, precio, stock]
+# NO está ordenado por código: ordenarlo al iniciar el
+# programa es parte del trabajo (y condición para la búsqueda binaria).
+# =====================================================================
+def catalogo_inicial():
+    """Devuelve el catálogo de partida del kiosco (lista de listas).
+    Pre: 
+    Post: devuelve una lista de productos
+    """
+    return [
+        [305, "Alfajor triple",           1, 1500.0, 24],
+        [112, "Agua saborizada 500 ml",   2, 1900.0, 10],
+        [421, "Cuaderno",                 4, 10000.0, 15],
+        [208, "Galletitas surtidas",      3, 2800.0,  8],
+        [117, "Gaseosa 1.5 L",            2, 4000.0,  6],
+        [302, "Chicles",                  1,  700.0, 40],
+        [415, "Birome azul",              4, 1200.0,  3],
+        [210, "Fideos 500 g",             3, 2100.0, 12],
+        [310, "Chocolate con leche",      1, 3200.0,  4],
+        [119, "Jugo en polvo",            2,  900.0, 30],
+    ]
+
+def buscar_por_codigo(catalogo, codigo):
+    """Busca un producto por código con BÚSQUEDA BINARIA.
+
+    Pre:  catalogo es una lista de productos ORDENADA por código (ascendente).
+    Post: devuelve la posición del producto con ese código, o -1 si no está.
+          No modifica el catálogo.
+
+    Es la búsqueda binaria de la Clase 8, adaptada: en lugar de comparar el
+    elemento completo, se compara el campo CODIGO de cada producto.
+    """
+    izq = 0
+    der = len(catalogo) - 1
+    while izq <= der:
+        medio = (izq + der) // 2
+        if catalogo[medio][CODIGO] == codigo:
+            return medio
+        if catalogo[medio][CODIGO] > codigo:
+            der = medio - 1
+        else:
+            izq = medio + 1
+    return -1
+
+def formato_de_precio(valor):
+    """Establece el tipeo de moneda argentina a un número: 2 decimales, punto de
+    miles y coma decimal.
+    Pre:  valor es un número.
+    Post: devuelve un string con el valor formateado, sin el signo '$'.
+    """
+    texto = f"{valor:,.2f}"
+    texto = texto.replace(",", "_").replace(".", ",").replace("_", ".")
+    return texto
 
 def pedir_entero_en_rango(mensaje, minimo, maximo):
     """Solicita al usuario un número entero dentro de un rango, reintentando
